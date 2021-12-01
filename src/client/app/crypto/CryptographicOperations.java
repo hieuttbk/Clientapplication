@@ -30,6 +30,7 @@ public class CryptographicOperations {
 	private static ECPublicKeyParameters publicKeyDAS;
 	private static byte[] ECQVRandom;
 	private static byte[] resRegRandom;
+	private static byte[] resRegRandomZ;
 	private static byte[] symmetricSessionKey;
 	
 	//private static String resName = null;
@@ -185,12 +186,24 @@ public class CryptographicOperations {
 	
 	public static String generateResourceRegistraionMaterial(String resName, String typeSub) {
 		boolean inputAccepted = false;
-	    
+		X9ECParameters ecp = SECNamedCurves.getByName("secp256r1");
+	    ECDomainParameters domainParams = new ECDomainParameters(ecp.getCurve(),
+	                                                             ecp.getG(), ecp.getN(), ecp.getH(),
+	                                                             ecp.getSeed());
+		
 	    /* Generate a random number with a fixed size of 32 bytes */
 		SecureRandom random = new SecureRandom();
 		resRegRandom = new byte[Constants.randomNumberSize];
 		random.nextBytes(resRegRandom); // Fill the array with random bytes
 		System.out.println("c = " + toHex(resRegRandom));
+		
+		resRegRandomZ = new byte[Constants.randomNumberSize];
+		random.nextBytes(resRegRandomZ); // Fill the array with random bytes
+		System.out.println("z = " + toHex(resRegRandomZ));
+		
+		ECPoint pointZ = domainParams.getG().multiply(new BigInteger(resRegRandomZ));
+		byte[] encodeZ = pointZ.getEncoded(true);
+		System.out.println("Z = " + toHex(encodeZ));
 		
 		/* Generate a timestamp */
 		Date date = new Date();
@@ -208,7 +221,21 @@ public class CryptographicOperations {
 		/* Do the sha256 of the secretTimestampConcat byte array */
 		byte[] Kr = sha256(secretTimestampConcat);
 		
-		System.out.println("Symmetric key: " + toHex(Kr));
+		System.out.println("Symmetric key Kr: " + toHex(Kr));
+		
+		
+		/* Compute the key Kz = H(z*P_DAS||Tr) used to encrypt requested resource (It is done for privacy purposes) */
+		/* Elliptic curve multiplication */
+		ECPoint secretPointZ = publicKeyDAS.getQ().multiply(new BigInteger(resRegRandomZ));
+		byte[] encodedSecretPointZ = secretPointZ.getEncoded(true);
+		
+		/* Concatenate the encoded secret point with the timestamp */	
+		byte[] secretTimestampConcatZ = concatByteArrays(encodedSecretPointZ, regTimestampBytes);
+		
+		/* Do the sha256 of the secretTimestampConcat byte array */
+		byte[] Kz = sha256(secretTimestampConcatZ);
+		
+		System.out.println("Symmetric key Kz: " + toHex(Kz));
 		
 		/* Get resource name and subscription type from the user (it will be change with a GUI) */
 		/*while(!inputAccepted) {
@@ -243,7 +270,16 @@ public class CryptographicOperations {
 		cleartext = concatByteArrays(cleartext, typeSubBytes);
 		
 		// Add random number
+		cleartext = concatByteArrays(cleartext, hexStringToByteArray(toHex(sepSymb)));
 		cleartext = concatByteArrays(cleartext, resRegRandom);
+		//Add IDu
+		cleartext = concatByteArrays(cleartext, hexStringToByteArray(toHex(sepSymb)));
+		cleartext = concatByteArrays(cleartext, hexStringToByteArray(toHex(Constants.clientID)));
+		//Add Kr
+		String KrString= toHex(Kr);
+		cleartext = concatByteArrays(cleartext, hexStringToByteArray(toHex(sepSymb)));
+		cleartext = concatByteArrays(cleartext, hexStringToByteArray(toHex(KrString)));
+		
 		System.out.println("cleartext: " + toHex(cleartext));
 		
 		// Generate a nonce (12 bytes) to be used for AES_256_CCM_8
@@ -254,7 +290,7 @@ public class CryptographicOperations {
 
 		// Encrypt the cleartext
 		CCMBlockCipher ccm = new CCMBlockCipher(new AESEngine());
-		ccm.init(true, new ParametersWithIV(new KeyParameter(Kr), nonce));
+		ccm.init(true, new ParametersWithIV(new KeyParameter(Kz), nonce));
 		byte[] ciphertext = new byte[cleartext.length + 8];
 		int len = ccm.processBytes(cleartext, 0, cleartext.length, ciphertext, 0);
 		try {
@@ -269,7 +305,7 @@ public class CryptographicOperations {
 		
 		System.out.println("Ciphertext: " + toHex(ciphertext));
 		
-		return toHex(regTimestampBytes) + "|" + toHex(ciphertext) + "|" + toHex(nonce);
+		return toHex(regTimestampBytes) + "|" + toHex(ciphertext) + "|" + toHex(nonce) + "|" + toHex(encodeZ);
 	}
 	
 	public static String createAuthIdentity() {
