@@ -23,10 +23,13 @@ import com.google.gson.JsonParser;
 
 import client.app.crypto.CryptographicOperations;
 import client.app.util.Constants;
+//import thirdPartyServer.ECCsecurity.EllipticCurveCryptography;
 
 public class HttpClientAuthenticationAuthorization {
-	
+
+	private static String ET;
 	private static String ticket;
+	private static String nonce2;
 	private static String aeTarget = null;
 	final static int port = 8080;
 
@@ -34,59 +37,54 @@ public class HttpClientAuthenticationAuthorization {
 		CloseableHttpClient httpClient = HttpClients.createDefault();
 		URI uri = null;
 		try {
-			uri = new URIBuilder()
-					.setScheme("http")
-					.setHost("localhost")
-					.setPort(port)
-					.setPath("/AuthorizationServer/ECQVClientRegistration")
-					.build();
+			uri = new URIBuilder().setScheme("http").setHost("localhost").setPort(port)
+					.setPath("/AuthorizationServer/ECQVClientRegistration").build();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		String encodedU = CryptographicOperations.getUfromRandom();
-		
+
 		/* Create the json body for the request */
 		JsonObject jsonBody = new JsonObject();
 		jsonBody.addProperty("clientID", Constants.clientID);
 		jsonBody.addProperty("U", encodedU);
 		Gson gson = new GsonBuilder().create();
 		String body = gson.toJson(jsonBody);
-		
+
 		/* Create the http post request */
 		HttpPost httpPostRequest = new HttpPost(uri);
-		StringEntity entity = new StringEntity(body,
-				ContentType.create("application/json", Consts.UTF_8));
+		StringEntity entity = new StringEntity(body, ContentType.create("application/json", Consts.UTF_8));
 		httpPostRequest.setEntity(entity);
 		try {
 			CloseableHttpResponse response = httpClient.execute(httpPostRequest);
 			HttpEntity respEntity = response.getEntity();
-			if(respEntity != null) {
+			if (respEntity != null) {
 				String respContent = EntityUtils.toString(respEntity);
-				
+
 				System.out.println("Response content: " + respContent);
-				
+
 				/* Get the content from the json object */
 				JsonParser parser = new JsonParser();
-			    JsonObject jsonRespBody = parser.parse(respContent).getAsJsonObject();
-			    
-			    String clientCertificate = jsonRespBody.get("certificate").getAsString();
-			    String q = jsonRespBody.get("q").getAsString();
-			    String pubKeyDAS = jsonRespBody.get("pubKey") .getAsString();
-			    
-			    System.out.println("Client certificate: " + clientCertificate);
-			    System.out.println("q value: " + q);
-			    System.out.println("Public key of DAS server: " + pubKeyDAS);
-			    
-			    /* Generate the key pair */
+				JsonObject jsonRespBody = parser.parse(respContent).getAsJsonObject();
+
+				String clientCertificate = jsonRespBody.get("certificate").getAsString();
+				String q = jsonRespBody.get("q").getAsString();
+				String pubKeyDAS = jsonRespBody.get("pubKey").getAsString();
+
+				System.out.println("Client certificate: " + clientCertificate);
+				System.out.println("q value: " + q);
+				System.out.println("Public key of DAS server: " + pubKeyDAS);
+
+				/* Generate the key pair */
 				CryptographicOperations.generateECKeyPair(clientCertificate, q);
-				
+
 				/* Verify public key correctness */
 				boolean verify = CryptographicOperations.verifyPublicKey(clientCertificate, pubKeyDAS);
-				if(verify==true) {
+				if (verify == true) {
 					System.out.println("The client public key has been verified successfully!");
-				}else {
+				} else {
 					System.out.println("Closing the connection...");
 					response.close();
 					System.out.println("An attacker modified the data sent over the http channel!");
@@ -102,67 +100,67 @@ public class HttpClientAuthenticationAuthorization {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static String resourceRegistration(String resName, String typeSub) {
 		String msg = "empty";
 		String err = "false";
 		CloseableHttpClient httpClient = HttpClients.createDefault();
 		URI uri = null;
 		try {
-			uri = new URIBuilder()
-					.setScheme("http")
-					.setHost("localhost")
-					.setPort(port)
-					.setPath("/AuthorizationServer/ResourceClientRegistration")
-					.build();
+			uri = new URIBuilder().setScheme("http").setHost("localhost").setPort(port)
+					.setPath("/AuthorizationServer/ResourceClientRegistration").build();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		String[] data = CryptographicOperations.generateResourceRegistraionMaterial(resName, typeSub).split("\\|");
-		
+
 		String Tr = data[0];
 		String subscription = data[1];
 		String nonce = data[2];
 		String encodeZ = data[3];
-		
+		String Kr = data[4];
+
 		/* Create the json body for the request */
 		JsonObject jsonBody = new JsonObject();
-		//jsonBody.addProperty("clientID", Constants.clientID);
+		// jsonBody.addProperty("clientID", Constants.clientID);
 		jsonBody.addProperty("timestamp", Tr);
 		jsonBody.addProperty("subscription", subscription);
 		jsonBody.addProperty("nonce", nonce);
 		jsonBody.addProperty("encodeZ", encodeZ);
 		Gson gson = new GsonBuilder().create();
 		String body = gson.toJson(jsonBody);
-		
+
 		System.out.println("Payload: " + body);
-		
+
 		/* Create the http post request */
 		HttpPost httpPostRequest = new HttpPost(uri);
-		StringEntity entity = new StringEntity(body,
-				ContentType.create("application/json", Consts.UTF_8));
+		StringEntity entity = new StringEntity(body, ContentType.create("application/json", Consts.UTF_8));
 		httpPostRequest.setEntity(entity);
 		CloseableHttpResponse response;
 		try {
 			response = httpClient.execute(httpPostRequest);
 			HttpEntity respEntity = response.getEntity();
 			// Parse the response if it is not empty
-			if(respEntity != null) {
+			if (respEntity != null) {
 				// Retrieve the payload
 				String respContent = EntityUtils.toString(respEntity);
-				if(response.getStatusLine().getStatusCode() != 400) {
+				if (response.getStatusLine().getStatusCode() != 400) {
 					// Retrieve the ticket from the payload
 					JsonParser parser = new JsonParser();
 					JsonObject jsonRespBody = parser.parse(respContent).getAsJsonObject();
 
-					if(jsonRespBody.has("message")) {
+					if (jsonRespBody.has("message")) {
 						msg = jsonRespBody.get("message").getAsString();
 					}
-					ticket = jsonRespBody.get("ticket").getAsString();
-					System.out.println("Access ticket: " + ticket);
-				}else {
+					ET = jsonRespBody.get("ET").getAsString();
+					nonce2 = jsonRespBody.get("nonce2").getAsString();
+					System.out.println("nonce2: " + nonce2);
+					System.out.println("ET: " + ET);
+					String[] dataReqET = CryptographicOperations.ticketResigtration(ET, Kr, nonce2).split("\\|");
+					ticket = dataReqET[0];
+				} else {
 					msg = respContent;
 					err = "true";
 					System.out.println("Error message: " + msg);
@@ -181,38 +179,33 @@ public class HttpClientAuthenticationAuthorization {
 		}
 		return msg + "|" + err;
 	}
-	
+
 	public static String sendAuthenticationAndAuthorizationRequest() {
 		CloseableHttpClient httpClient = HttpClients.createDefault();
 		String rxTimestamp = null;
 		String sessionKey = null;
 		URI uri = null;
 		try {
-			uri = new URIBuilder()
-					.setScheme("http")
-					.setHost("localhost")
-					.setPort(9998)
-					.build();
+			uri = new URIBuilder().setScheme("http").setHost("localhost").setPort(9998).build();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		String Qu = CryptographicOperations.createAuthIdentity();
-		
+
 		/* Create the json body for the request */
 		JsonObject jsonBody = new JsonObject();
 		jsonBody.addProperty("clientID", Constants.clientID);
 		jsonBody.addProperty("Qu", Qu);
-		jsonBody.addProperty("ticket", ticket);
+		jsonBody.addProperty("Ticket", ticket);
 		Gson gson = new GsonBuilder().create();
 		String body = gson.toJson(jsonBody);
-		
+
 		System.out.println("Authentication request: " + body);
 		/* Create the http post request */
 		HttpPost httpPostRequest = new HttpPost(uri);
-		StringEntity entity = new StringEntity(body,
-				ContentType.create("application/json", Consts.UTF_8));
+		StringEntity entity = new StringEntity(body, ContentType.create("application/json", Consts.UTF_8));
 		httpPostRequest.setEntity(entity);
 		try {
 			CloseableHttpResponse response = httpClient.execute(httpPostRequest);
@@ -220,17 +213,17 @@ public class HttpClientAuthenticationAuthorization {
 			EntityUtils.consume(response.getEntity());
 			System.out.println("Response: " + responseData);
 			System.out.println("Response status code: " + response.getStatusLine().getStatusCode());
-			
+
 			// Parse the json payload
-		    JsonParser parser = new JsonParser();
-		    JsonObject jsonReqBody = parser.parse(responseData).getAsJsonObject();
-		    
-		    // Save the timestamp Ts and the uri of the resource in variables
-		    aeTarget = jsonReqBody.get("aeTarget").getAsString();
-		    rxTimestamp = jsonReqBody.get("timestamp").getAsString();
-		    
-		    sessionKey = CryptographicOperations.generateSymmetricSessionKey(rxTimestamp);
-			
+			JsonParser parser = new JsonParser();
+			JsonObject jsonReqBody = parser.parse(responseData).getAsJsonObject();
+
+			// Save the timestamp Ts and the uri of the resource in variables
+			aeTarget = jsonReqBody.get("aeTarget").getAsString();
+			rxTimestamp = jsonReqBody.get("timestamp").getAsString();
+
+			sessionKey = CryptographicOperations.generateSymmetricSessionKey(rxTimestamp);
+
 			httpClient.close();
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block
@@ -239,10 +232,10 @@ public class HttpClientAuthenticationAuthorization {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return sessionKey;
 	}
-	
+
 	public static String getAeTarget() {
 		return aeTarget;
 	}
