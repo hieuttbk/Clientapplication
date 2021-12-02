@@ -25,8 +25,8 @@ import client.app.crypto.CryptographicOperations;
 import client.app.util.Constants;
 
 public class HttpClientAuthenticationAuthorization {
-	private static String nonce2;
-	private static String ET;
+	
+	private static String ticket;
 	private static String aeTarget = null;
 	final static int port = 8080;
 
@@ -160,10 +160,8 @@ public class HttpClientAuthenticationAuthorization {
 					if(jsonRespBody.has("message")) {
 						msg = jsonRespBody.get("message").getAsString();
 					}
-					ET = jsonRespBody.get("ET").getAsString();
-					nonce2 = jsonRespBody.get("nonce2").getAsString();
-					System.out.println("Nonce2: " + nonce2);
-					System.out.println("Access ticket: " + ET);
+					ticket = jsonRespBody.get("ticket").getAsString();
+					System.out.println("Access ticket: " + ticket);
 				}else {
 					msg = respContent;
 					err = "true";
@@ -206,7 +204,7 @@ public class HttpClientAuthenticationAuthorization {
 		JsonObject jsonBody = new JsonObject();
 		jsonBody.addProperty("clientID", Constants.clientID);
 		jsonBody.addProperty("Qu", Qu);
-		jsonBody.addProperty("ET", ET);
+		jsonBody.addProperty("ticket", ticket);
 		Gson gson = new GsonBuilder().create();
 		String body = gson.toJson(jsonBody);
 		
@@ -214,7 +212,7 @@ public class HttpClientAuthenticationAuthorization {
 		/* Create the http post request */
 		HttpPost httpPostRequest = new HttpPost(uri);
 		StringEntity entity = new StringEntity(body,
-				ContentType.create("application/json",Consts.UTF_8));
+				ContentType.create("application/json", Consts.UTF_8));
 		httpPostRequest.setEntity(entity);
 		try {
 			CloseableHttpResponse response = httpClient.execute(httpPostRequest);
