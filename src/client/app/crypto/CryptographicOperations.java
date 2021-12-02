@@ -317,6 +317,25 @@ public class CryptographicOperations {
 		return toHex(Qu);
 	}
 	
+	public static String ticketResigtration(String ET,String kr,String nonce) {
+		CCMBlockCipher ccm = new CCMBlockCipher(new AESEngine());
+		ccm.init(false, new ParametersWithIV(new KeyParameter(Kr), hexStringToByteArray(nonce)));
+		byte[] tmp = new byte[ciphertextBytes.length];
+		int len = ccm.processBytes(ciphertextBytes, 0, ciphertextBytes.length, tmp, 0);
+		try {
+			len += ccm.doFinal(tmp, len);
+			cleartext = new byte[len];
+			System.arraycopy(tmp, 0, cleartext, 0, len);
+			System.out.println("Cleartext: " + toHex(cleartext));
+		} catch (IllegalStateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidCipherTextException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ET;
+	}
 	public static String generateSymmetricSessionKey(String Ts) {
 		// Compute the symmetric session key SKsession = H(du*Pdas||Ts)
 		// Elliptic curve multiplication
