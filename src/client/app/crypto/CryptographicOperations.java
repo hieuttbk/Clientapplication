@@ -291,8 +291,12 @@ public class CryptographicOperations {
 		cleartext = concatByteArrays(cleartext, typeSubBytes);
 
 		// Add random number
+		
+//		cleartext = concatByteArrays(cleartext, hexStringToByteArray(toHex(sepSymb)));
+//		cleartext = concatByteArrays(cleartext, resRegRandom);
+		String C = toHex(resRegRandom);
 		cleartext = concatByteArrays(cleartext, hexStringToByteArray(toHex(sepSymb)));
-		cleartext = concatByteArrays(cleartext, resRegRandom);
+		cleartext = concatByteArrays(cleartext, hexStringToByteArray(toHex(C)));
 		// Add IDu
 		cleartext = concatByteArrays(cleartext, hexStringToByteArray(toHex(sepSymb)));
 		cleartext = concatByteArrays(cleartext, hexStringToByteArray(toHex(Constants.clientID)));
@@ -338,21 +342,41 @@ public class CryptographicOperations {
 		byte[] Qu = sha256(IDresRegRandomConcat);
 		System.out.println("C-Client: "+toHex(resRegRandom));
 		System.out.println("Client(Client): "+ Constants.clientID);
+		System.out.println("Qu: "+ toHex(Qu));
 		
 		return toHex(Qu);
 	}
+	private static String convertHexToString(String hex) {
 
+		StringBuilder sb = new StringBuilder();
+		StringBuilder temp = new StringBuilder();
+
+		// 49204c6f7665204a617661 split into two characters 49, 20, 4c...
+		for (int i = 0; i < hex.length() - 1; i += 2) {
+
+			// grab the hex in pairs
+			String output = hex.substring(i, (i + 2));
+			// convert hex to decimal
+			int decimal = Integer.parseInt(output, 16);
+			// convert the decimal to character
+			sb.append((char) decimal);
+
+			temp.append(decimal);
+		}
+
+		return sb.toString();
+	}
 	public static String ticketResigtration(String ET, String Kr, String nonce) {
-		byte[] ticket = null;
+		byte[] decodeET = null;
 		CCMBlockCipher ccm = new CCMBlockCipher(new AESEngine());
 		ccm.init(false, new ParametersWithIV(new KeyParameter(hexStringToByteArray(Kr)), hexStringToByteArray(nonce)));
 		byte[] tmp = new byte[hexStringToByteArray(ET).length];
 		int len = ccm.processBytes(hexStringToByteArray(ET), 0, hexStringToByteArray(ET).length, tmp, 0);
 		try {
 			len += ccm.doFinal(tmp, len);
-			ticket = new byte[len];
-			System.arraycopy(tmp, 0, ticket, 0, len);
-			System.out.println("ticket: " + toHex(ticket));
+			decodeET = new byte[len];
+			System.arraycopy(tmp, 0, decodeET, 0, len);
+			System.out.println("decodeET: " + toHex(decodeET));
 		} catch (IllegalStateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -360,7 +384,23 @@ public class CryptographicOperations {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return toHex(ticket);
+		
+		//int appDataByteLength = decodeET.length;
+//		String appData = toHex(decodeET).substring(0, 2 * appDataByteLength); // dang hex co 2 gia tri
+//		appData = convertHexToString(appData);
+		//String appData = toHex(decodeET); // dang hex co 2 gia tri
+		//appData = convertHexToString(appData);
+		String appData = convertHexToString(toHex(decodeET));
+
+		String[] data = appData.split("\\|\\|");
+
+		String ticket=data[0];
+		String Texp=data[1];
+	    
+		System.out.println("Ticket: "+ ticket);
+		System.out.println("Texp: "+ toHex(Texp));
+
+		return ticket+"|"+Texp;
 	}
 
 	public static String generateSymmetricSessionKey(String Ts) {

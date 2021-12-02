@@ -29,6 +29,7 @@ public class HttpClientAuthenticationAuthorization {
 
 	private static String ET;
 	private static String ticket;
+	private static String Texp;
 	private static String nonce2;
 	private static String aeTarget = null;
 	final static int port = 8080;
@@ -160,6 +161,7 @@ public class HttpClientAuthenticationAuthorization {
 					System.out.println("ET: " + ET);
 					String[] dataReqET = CryptographicOperations.ticketResigtration(ET, Kr, nonce2).split("\\|");
 					ticket = dataReqET[0];
+					Texp = dataReqET[1];
 				} else {
 					msg = respContent;
 					err = "true";
