@@ -30,6 +30,7 @@ public class HttpClientAuthenticationAuthorization {
 	private static String ET;
 	private static String ticket;
 	private static String Texp;
+	private static String nonce1;
 	private static String nonce2;
 	private static String aeTarget = null;
 	final static int port = 8080;
@@ -157,7 +158,9 @@ public class HttpClientAuthenticationAuthorization {
 					}
 					ET = jsonRespBody.get("ET").getAsString();
 					nonce2 = jsonRespBody.get("nonce2").getAsString();
+					nonce1 = jsonRespBody.get("nonce1").getAsString();
 					System.out.println("nonce2: " + nonce2);
+					System.out.println("nonce1: " + nonce1);
 					System.out.println("ET: " + ET);
 					String[] dataReqET = CryptographicOperations.ticketResigtration(ET, Kr, nonce2).split("\\|");
 					ticket = dataReqET[0];
@@ -198,7 +201,8 @@ public class HttpClientAuthenticationAuthorization {
 
 		/* Create the json body for the request */
 		JsonObject jsonBody = new JsonObject();
-		jsonBody.addProperty("clientID", Constants.clientID);
+		//jsonBody.addProperty("clientID", Constants.clientID);
+		jsonBody.addProperty("nonce1", nonce1);
 		jsonBody.addProperty("Qu", Qu);
 		jsonBody.addProperty("Ticket", ticket);
 		Gson gson = new GsonBuilder().create();
@@ -226,7 +230,6 @@ public class HttpClientAuthenticationAuthorization {
 
 			sessionKey = CryptographicOperations.generateSymmetricSessionKey(rxTimestamp);
 
-			httpClient.close();
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -32,6 +32,7 @@ public class CryptographicOperations {
 	private static byte[] resRegRandom;
 	private static byte[] resRegRandomZ;
 	private static byte[] symmetricSessionKey;
+	private static byte[] Sk;
 
 	// private static String resName = null;
 
@@ -341,7 +342,7 @@ public class CryptographicOperations {
 		// Do the sha256 of the concatenation
 		byte[] Qu = sha256(IDresRegRandomConcat);
 		System.out.println("C-Client: "+toHex(resRegRandom));
-		System.out.println("Client(Client): "+ Constants.clientID);
+		System.out.println("ClientID(Client): "+ Constants.clientID);
 		System.out.println("Qu: "+ toHex(Qu));
 		
 		return toHex(Qu);
@@ -414,6 +415,39 @@ public class CryptographicOperations {
 		symmetricSessionKey = sha256(secretTimestampEncoded);
 		System.out.println("Symmetric session key: " + toHex(symmetricSessionKey));
 		return toHex(symmetricSessionKey);
+	}
+	
+	public static String DecryptURL(String EU,String nonce3, String Ts) {
+		
+			// Compute the symmetric session key SKsession = H(du*Pdas||Ts)
+			// Elliptic curve multiplication
+			ECPoint secretPoint = publicKeyDAS.getQ().multiply(privateKey.getD());
+			byte[] encodedSecretPoint = secretPoint.getEncoded(true);
+			// Concatenate encoded secret point with the received timestamp
+			byte[] secretTimestampEncoded = concatByteArrays(encodedSecretPoint, hexStringToByteArray(Ts));
+			// Do sha256 to obtain the symmetric key
+			Sk = sha256(secretTimestampEncoded);
+			System.out.println("Symmetric session key Sk: " + toHex(Sk));
+			
+		byte[] URL = null;
+		CCMBlockCipher ccm = new CCMBlockCipher(new AESEngine());
+		ccm.init(false, new ParametersWithIV(new KeyParameter(Sk), hexStringToByteArray(nonce3)));
+		byte[] tmp = new byte[EU.length()];
+		int len = ccm.processBytes(hexStringToByteArray(EU), 0, EU.length(), tmp, 0);
+		try {
+			len += ccm.doFinal(tmp, len);
+			URL = new byte[len];
+			System.arraycopy(tmp, 0,URL , 0, len);
+			System.out.println("URL: " + toHex(URL));
+		} catch (IllegalStateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidCipherTextException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return toHex(URL);
+		
 	}
 
 	public static String getSymmetricSessionKey() {
