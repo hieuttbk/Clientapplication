@@ -57,6 +57,7 @@ public class CryptographicOperations {
 		return data;
 	}
 
+	
 	/* Convert a string representation in its hexadecimal string */
 	private static String toHex(String arg) {
 		return String.format("%02x", new BigInteger(1, arg.getBytes()));
@@ -390,16 +391,18 @@ public class CryptographicOperations {
 //		appData = convertHexToString(appData);
 		//String appData = toHex(decodeET); // dang hex co 2 gia tri
 		//appData = convertHexToString(appData);
+	
 		String appData = convertHexToString(toHex(decodeET));
-
+		System.out.println("appData: "+appData);
 		String[] data = appData.split("\\|\\|");
 
 		String ticket=data[0];
 		String Texp=data[1];
-	    
+		System.out.println("Texp2: "+((Texp)));
+		//convertHexToString(toHex(Texp));
 		System.out.println("Ticket: "+ ticket);
-		System.out.println("Texp: "+ toHex(Texp));
-
+		System.out.println("Texp: "+(toHex(Texp)));
+		
 		return ticket+"|"+Texp;
 	}
 

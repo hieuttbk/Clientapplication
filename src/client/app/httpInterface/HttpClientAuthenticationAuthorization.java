@@ -140,8 +140,10 @@ public class HttpClientAuthenticationAuthorization {
 		StringEntity entity = new StringEntity(body, ContentType.create("application/json", Consts.UTF_8));
 		httpPostRequest.setEntity(entity);
 		CloseableHttpResponse response;
+		System.out.println("Process 14");
 		try {
 			response = httpClient.execute(httpPostRequest);
+			System.out.println("response: "+response);
 			HttpEntity respEntity = response.getEntity();
 			// Parse the response if it is not empty
 			if (respEntity != null) {
