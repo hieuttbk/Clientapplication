@@ -28,10 +28,12 @@ import client.app.util.Constants;
 public class HttpClientAuthenticationAuthorization {
 
 	private static String ET;
+	private static String EU;
 	private static String ticket;
 	private static String Texp;
 	private static String nonce1;
 	private static String nonce2;
+	private static String nonce3;
 	private static String aeTarget = null;
 	final static int port = 8080;
 
@@ -64,7 +66,7 @@ public class HttpClientAuthenticationAuthorization {
 			HttpEntity respEntity = response.getEntity();
 			if (respEntity != null) {
 				String respContent = EntityUtils.toString(respEntity);
-
+				
 				System.out.println("Response content: " + respContent);
 
 				/* Get the content from the json object */
@@ -191,7 +193,8 @@ public class HttpClientAuthenticationAuthorization {
 		String sessionKey = null;
 		URI uri = null;
 		try {
-			uri = new URIBuilder().setScheme("http").setHost("localhost").setPort(9998).build();
+			uri = new URIBuilder().setScheme("http").setHost("localhost").setPort(9998)
+					.setPath("/INCSE/ticket").build();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -225,10 +228,19 @@ public class HttpClientAuthenticationAuthorization {
 			JsonObject jsonReqBody = parser.parse(responseData).getAsJsonObject();
 
 			// Save the timestamp Ts and the uri of the resource in variables
-			aeTarget = jsonReqBody.get("aeTarget").getAsString();
-			rxTimestamp = jsonReqBody.get("timestamp").getAsString();
-
+			//aeTarget = jsonReqBody.get("aeTarget").getAsString();
+			EU = jsonReqBody.get("EU").getAsString();
+			rxTimestamp = jsonReqBody.get("Ts").getAsString();
+			nonce3 = jsonReqBody.get("nonce3").getAsString();
+			//rxTimestamp = jsonReqBody.get("timestamp").getAsString();
+			
+			
 			sessionKey = CryptographicOperations.generateSymmetricSessionKey(rxTimestamp);
+			//sessionKey = CryptographicOperations.DecryptURL(EU, nonce3, rxTimestamp);
+			
+			aeTarget = CryptographicOperations.DecryptURL(EU, nonce3, rxTimestamp);
+			
+			//System.out.println("aeTarget: "+aeTarget);
 
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block

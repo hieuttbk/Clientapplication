@@ -32,7 +32,6 @@ public class CryptographicOperations {
 	private static byte[] resRegRandom;
 	private static byte[] resRegRandomZ;
 	private static byte[] symmetricSessionKey;
-	private static byte[] Sk;
 
 	// private static String resName = null;
 
@@ -97,6 +96,8 @@ public class CryptographicOperations {
 	/* Return an encoded elliptic curve point obtained as U = uG */
 	public static String getUfromRandom() {
 		// Get domain parameters for example curve secp256r1
+
+		System.out.println("\n >>>>>>> Process 5.1, 5.2 created u,U=u.G .....");
 		X9ECParameters ecp = SECNamedCurves.getByName("secp256r1");
 		ECDomainParameters domainParams = new ECDomainParameters(ecp.getCurve(), ecp.getG(), ecp.getN(), ecp.getH(),
 				ecp.getSeed());
@@ -118,6 +119,7 @@ public class CryptographicOperations {
 	 * from the dynamic authorization server
 	 */
 	public static void generateECKeyPair(String cert, String q) {
+		System.out.println("\n >>>>>>> Process 5.9 to 5.10 created du,Pu .....");
 		// Get domain parameters for example curve secp256r1
 		X9ECParameters ecp = SECNamedCurves.getByName("secp256r1");
 		ECDomainParameters domainParams = new ECDomainParameters(ecp.getCurve(), ecp.getG(), ecp.getN(), ecp.getH(),
@@ -129,6 +131,7 @@ public class CryptographicOperations {
 		 * Calculation of the private key as d = H(cert||ID)u + q and public key as P =
 		 * dG
 		 */
+		System.out.println("\n >>>>>>> Process 5.9 created du = H(cert_u||IDu)u+qu .....");
 		/* Concatenation of 2 bytes array */
 		byte[] certIDconcat = concatByteArrays(certBytes, hexStringToByteArray(Constants.clientID));
 
@@ -147,6 +150,7 @@ public class CryptographicOperations {
 		 * Perform elliptic curve multiplication operation to obtain the public key from
 		 * the private key
 		 */
+		System.out.println("\n >>>>>>> Process 5.10 created Pu=du*G .....");
 		ECPoint pubKeyPoint = domainParams.getG().multiply(privateKey.getD());
 		publicKey = new ECPublicKeyParameters(pubKeyPoint, domainParams);
 
@@ -159,6 +163,7 @@ public class CryptographicOperations {
 	 * not been tampered
 	 */
 	public static boolean verifyPublicKey(String encodedStringCert, String encodedStringPubKeyDAS) {
+		System.out.println("\n >>>>>>> Process 5.11 verify Pu .....");
 		// Get domain parameters for example curve secp256r1
 		X9ECParameters ecp = SECNamedCurves.getByName("secp256r1");
 		ECDomainParameters domainParams = new ECDomainParameters(ecp.getCurve(), ecp.getG(), ecp.getN(), ecp.getH(),
@@ -202,10 +207,12 @@ public class CryptographicOperations {
 
 	public static String generateResourceRegistraionMaterial(String resName, String typeSub) {
 		boolean inputAccepted = false;
+		System.out.println("\n >>>>>>> Process 6.1 to 6.6 created c,z,Z,Tr,Kr,Kz,Sub .....");
 		X9ECParameters ecp = SECNamedCurves.getByName("secp256r1");
 		ECDomainParameters domainParams = new ECDomainParameters(ecp.getCurve(), ecp.getG(), ecp.getN(), ecp.getH(),
 				ecp.getSeed());
 
+		System.out.println("\n >>>>>>> Process 6.1 created c,z .....");
 		/* Generate a random number with a fixed size of 32 bytes */
 		SecureRandom random = new SecureRandom();
 		resRegRandom = new byte[Constants.randomNumberSize];
@@ -216,10 +223,12 @@ public class CryptographicOperations {
 		random.nextBytes(resRegRandomZ); // Fill the array with random bytes
 		System.out.println("z = " + toHex(resRegRandomZ));
 
+		System.out.println("\n >>>>>>> Process 6.2 created Z=z.G .....");
 		ECPoint pointZ = domainParams.getG().multiply(new BigInteger(resRegRandomZ));
 		byte[] encodeZ = pointZ.getEncoded(true);
 		System.out.println("Z = " + toHex(encodeZ));
 
+		System.out.println("\n >>>>>>> Process 6.3 created Tr .....");
 		/* Generate a timestamp */
 		Date date = new Date();
 		long regTimestamp = date.getTime();
@@ -230,6 +239,7 @@ public class CryptographicOperations {
 		 * done for privacy purposes)
 		 */
 		/* Elliptic curve multiplication */
+		System.out.println("\n >>>>>>> Process 6.4 created Kr = H(d*P_DAS||Tr) .....");
 		ECPoint secretPoint = publicKeyDAS.getQ().multiply(privateKey.getD());
 		byte[] encodedSecretPoint = secretPoint.getEncoded(true);
 
@@ -246,6 +256,7 @@ public class CryptographicOperations {
 		 * done for privacy purposes)
 		 */
 		/* Elliptic curve multiplication */
+		System.out.println("\n >>>>>>> Process 6.5 created Kz = H(z*P_DAS||Tr) .....");
 		ECPoint secretPointZ = publicKeyDAS.getQ().multiply(new BigInteger(resRegRandomZ));
 		byte[] encodedSecretPointZ = secretPointZ.getEncoded(true);
 
@@ -283,6 +294,7 @@ public class CryptographicOperations {
 		 */
 
 		/* Create the cleartext to encrypt from the information provided by the user */
+		System.out.println("\n >>>>>>> Process 6.6 created Sub = E_Kz(Rn||Type||c||IDu||Kr) .....");
 		String sepSymb = "||";
 		byte[] resNameBytes = hexStringToByteArray(toHex(resName));
 		byte[] typeSubBytes = hexStringToByteArray(toHex(typeSub));
@@ -292,7 +304,7 @@ public class CryptographicOperations {
 		cleartext = concatByteArrays(cleartext, typeSubBytes);
 
 		// Add random number
-		
+
 //		cleartext = concatByteArrays(cleartext, hexStringToByteArray(toHex(sepSymb)));
 //		cleartext = concatByteArrays(cleartext, resRegRandom);
 		String C = toHex(resRegRandom);
@@ -331,22 +343,25 @@ public class CryptographicOperations {
 
 		System.out.println("Ciphertext: " + toHex(ciphertext));
 
-		return toHex(regTimestampBytes) + "|" + toHex(ciphertext) + "|" + toHex(nonce) + "|" + toHex(encodeZ)+"|"+toHex(Kr);
+		return toHex(regTimestampBytes) + "|" + toHex(ciphertext) + "|" + toHex(nonce) + "|" + toHex(encodeZ) + "|"
+				+ toHex(Kr);
 	}
 
 	public static String createAuthIdentity() {
+		System.out.println("\n >>>>>>> Process 7.1 created Qu = H(IDu||c) .....");
 		byte[] clientIDBytes = hexStringToByteArray(Constants.clientID);
 		// Concatenate the identity with the random number generated during resource
 		// registration
 		byte[] IDresRegRandomConcat = concatByteArrays(clientIDBytes, resRegRandom);
 		// Do the sha256 of the concatenation
 		byte[] Qu = sha256(IDresRegRandomConcat);
-		System.out.println("C-Client: "+toHex(resRegRandom));
-		System.out.println("ClientID(Client): "+ Constants.clientID);
-		System.out.println("Qu: "+ toHex(Qu));
-		
+		System.out.println("C-Client: " + toHex(resRegRandom));
+		System.out.println("ClientID(Client): " + Constants.clientID);
+		System.out.println("Qu: " + toHex(Qu));
+
 		return toHex(Qu);
 	}
+
 	private static String convertHexToString(String hex) {
 
 		StringBuilder sb = new StringBuilder();
@@ -367,7 +382,9 @@ public class CryptographicOperations {
 
 		return sb.toString();
 	}
+
 	public static String ticketResigtration(String ET, String Kr, String nonce) {
+		System.out.println("\n >>>>>>> Process 6.14 Decrypt ET => Ticket||Texp .....");
 		byte[] decodeET = null;
 		CCMBlockCipher ccm = new CCMBlockCipher(new AESEngine());
 		ccm.init(false, new ParametersWithIV(new KeyParameter(hexStringToByteArray(Kr)), hexStringToByteArray(nonce)));
@@ -385,23 +402,22 @@ public class CryptographicOperations {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		//int appDataByteLength = decodeET.length;
+
+		// int appDataByteLength = decodeET.length;
 //		String appData = toHex(decodeET).substring(0, 2 * appDataByteLength); // dang hex co 2 gia tri
 //		appData = convertHexToString(appData);
-		//String appData = toHex(decodeET); // dang hex co 2 gia tri
-		//appData = convertHexToString(appData);
+		// String appData = toHex(decodeET); // dang hex co 2 gia tri
+		// appData = convertHexToString(appData);
 		String appData = convertHexToString(toHex(decodeET));
-
+		System.out.println("dataDecode: " + appData);
 		String[] data = appData.split("\\|\\|");
 
-		String ticket=data[0];
-		String Texp=data[1];
-	    
-		System.out.println("Ticket: "+ ticket);
-		System.out.println("Texp: "+ toHex(Texp));
+		String ticket = data[0];
+		String Texp = data[1];
+		System.out.println("Texp: " + Texp);
+		System.out.println("Ticket: " + ticket);
 
-		return ticket+"|"+Texp;
+		return ticket + "|" + Texp;
 	}
 
 	public static String generateSymmetricSessionKey(String Ts) {
@@ -416,29 +432,25 @@ public class CryptographicOperations {
 		System.out.println("Symmetric session key: " + toHex(symmetricSessionKey));
 		return toHex(symmetricSessionKey);
 	}
-	
-	public static String DecryptURL(String EU,String nonce3, String Ts) {
-		
-			// Compute the symmetric session key SKsession = H(du*Pdas||Ts)
-			// Elliptic curve multiplication
-			ECPoint secretPoint = publicKeyDAS.getQ().multiply(privateKey.getD());
-			byte[] encodedSecretPoint = secretPoint.getEncoded(true);
-			// Concatenate encoded secret point with the received timestamp
-			byte[] secretTimestampEncoded = concatByteArrays(encodedSecretPoint, hexStringToByteArray(Ts));
-			// Do sha256 to obtain the symmetric key
-			Sk = sha256(secretTimestampEncoded);
-			System.out.println("Symmetric session key Sk: " + toHex(Sk));
-			
+
+	public static String DecryptURL(String EU, String nonce3, String Ts) {
+
+		// Compute the symmetric session key SKsession = H(du*Pdas||Ts)
+		// Elliptic curve multiplication
+		System.out.println("\n >>>>>>> Process 7.8 created Sk .....");
+		String Sk=generateSymmetricSessionKey(Ts);
+
 		byte[] URL = null;
+		System.out.println("\n >>>>>>> Process 7.9 Decrypt D_Sk(EU) => URL .....");
 		CCMBlockCipher ccm = new CCMBlockCipher(new AESEngine());
-		ccm.init(false, new ParametersWithIV(new KeyParameter(Sk), hexStringToByteArray(nonce3)));
-		byte[] tmp = new byte[EU.length()];
-		int len = ccm.processBytes(hexStringToByteArray(EU), 0, EU.length(), tmp, 0);
+		ccm.init(false, new ParametersWithIV(new KeyParameter(hexStringToByteArray(Sk)), hexStringToByteArray(nonce3)));
+		byte[] tmp = new byte[hexStringToByteArray(EU).length];
+		int len = ccm.processBytes(hexStringToByteArray(EU), 0, hexStringToByteArray(EU).length, tmp, 0);
 		try {
 			len += ccm.doFinal(tmp, len);
 			URL = new byte[len];
-			System.arraycopy(tmp, 0,URL , 0, len);
-			System.out.println("URL: " + toHex(URL));
+			System.arraycopy(tmp, 0, URL, 0, len);
+			System.out.println("URL: " + convertHexToString(toHex(URL)));
 		} catch (IllegalStateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -446,8 +458,7 @@ public class CryptographicOperations {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return toHex(URL);
-		
+		return convertHexToString(toHex(URL));
 	}
 
 	public static String getSymmetricSessionKey() {
