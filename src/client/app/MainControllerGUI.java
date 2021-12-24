@@ -29,6 +29,7 @@ import org.bouncycastle.crypto.tls.TlsClientProtocol;
 import client.app.crypto.CryptographicOperations;
 import client.app.httpInterface.HTTPSpskClient;
 import client.app.httpInterface.HttpClientAuthenticationAuthorization;
+import client.app.httpInterface.HttpOM2M;
 import client.app.util.Constants;
 
 public class MainControllerGUI extends JFrame {
@@ -104,8 +105,8 @@ public class MainControllerGUI extends JFrame {
         					 int port = 5556;
         					 try {
         						 address = InetAddress.getLocalHost();
-        						 TlsClientProtocol protocol = openTlsConnection(address, port, httpsClient);
-        						 httpsClient.createAEclient(protocol);
+//        						 TlsClientProtocol protocol = openTlsConnection(address, port, httpsClient);
+//        						 httpsClient.createAEclient(protocol);
         					 } catch (UnknownHostException e) {
         						 // TODO Auto-generated catch block
         						 e.printStackTrace();
@@ -162,8 +163,9 @@ public class MainControllerGUI extends JFrame {
         				int port = 5556;
         				try {
         					address = InetAddress.getLocalHost();
-        					TlsClientProtocol protocol = openTlsConnection(address, port, httpsClient);
-        					response = httpsClient.retrieveLatestResource(protocol, cinTarget);
+//        					TlsClientProtocol protocol = openTlsConnection(address, port, httpsClient);
+//        					response = httpsClient.retrieveLatestResource(protocol, cinTarget);
+        					response = HttpOM2M.retrieveLatestResource(aeTargets.get(Constants.TEMPERATURE), HttpClientAuthenticationAuthorization.getacp());
         				} catch (UnknownHostException e) {
         					// TODO Auto-generated catch block
         					e.printStackTrace();

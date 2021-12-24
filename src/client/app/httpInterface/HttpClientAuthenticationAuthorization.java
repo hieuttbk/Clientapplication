@@ -35,6 +35,8 @@ public class HttpClientAuthenticationAuthorization {
 	private static String nonce2;
 	private static String nonce3;
 	private static String aeTarget = null;
+	private static String acp = null;
+
 	final static int port = 8080;
 
 	public static void ECQVregistration() {
@@ -241,8 +243,9 @@ public class HttpClientAuthenticationAuthorization {
 			
 			String appData = CryptographicOperations.DecryptURL(EU, nonce3, sessionKey);
 			String[] data = appData.split("\\|");
-			String acp = data[0];
+			//String acp = data[0];
 			aeTarget = data[1];
+			acp = data[0]; 
 			System.out.println("acp: "+acp);
 			System.out.println("aeTarget: "+aeTarget);
 
@@ -259,5 +262,9 @@ public class HttpClientAuthenticationAuthorization {
 
 	public static String getAeTarget() {
 		return aeTarget;
+	}
+	
+	public static String getacp() {
+		return acp;
 	}
 }
