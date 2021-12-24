@@ -92,9 +92,11 @@ public class MainControllerGUI extends JFrame {
         				 String[] response = HttpClientAuthenticationAuthorization.resourceRegistration(resName, subType).split("\\|");
         				 String msg = response[0];
         				 String err = response[1];
+        				 
         				 if(err.equals("false")) {
         					 String symmetricSessionKey = HttpClientAuthenticationAuthorization.sendAuthenticationAndAuthorizationRequest();
-
+        					 
+        					 
         					 // Create the HTTPS client to send encrypted requests to the OM2M Infrastructure Node
         					 BasicTlsPSKIdentity pskIdentity = new BasicTlsPSKIdentity(Constants.clientID, symmetricSessionKey.getBytes());
         					 HTTPSpskClient httpsClient = new HTTPSpskClient(null, pskIdentity);

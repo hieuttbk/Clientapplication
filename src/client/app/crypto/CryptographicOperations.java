@@ -423,6 +423,7 @@ public class CryptographicOperations {
 	public static String generateSymmetricSessionKey(String Ts) {
 		// Compute the symmetric session key SKsession = H(du*Pdas||Ts)
 		// Elliptic curve multiplication
+		System.out.println("\n >>>>>>> Process 7.8 created Sk .....");
 		ECPoint secretPoint = publicKeyDAS.getQ().multiply(privateKey.getD());
 		byte[] encodedSecretPoint = secretPoint.getEncoded(true);
 		// Concatenate encoded secret point with the received timestamp
@@ -433,13 +434,11 @@ public class CryptographicOperations {
 		return toHex(symmetricSessionKey);
 	}
 
-	public static String DecryptURL(String EU, String nonce3, String Ts) {
+	public static String DecryptURL(String EU, String nonce3, String Sk) {
 
 		// Compute the symmetric session key SKsession = H(du*Pdas||Ts)
 		// Elliptic curve multiplication
-		System.out.println("\n >>>>>>> Process 7.8 created Sk .....");
-		String Sk=generateSymmetricSessionKey(Ts);
-
+		
 		byte[] URL = null;
 		System.out.println("\n >>>>>>> Process 7.9 Decrypt D_Sk(EU) => URL .....");
 		CCMBlockCipher ccm = new CCMBlockCipher(new AESEngine());

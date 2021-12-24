@@ -164,6 +164,7 @@ public class HttpClientAuthenticationAuthorization {
 					System.out.println("nonce2: " + nonce2);
 					System.out.println("nonce1: " + nonce1);
 					System.out.println("ET: " + ET);
+					System.out.println(">>>>>>>>>>>>>>>>>>>>msg: " + msg);
 					String[] dataReqET = CryptographicOperations.ticketResigtration(ET, Kr, nonce2).split("\\|");
 					ticket = dataReqET[0];
 					Texp = dataReqET[1];
@@ -238,9 +239,12 @@ public class HttpClientAuthenticationAuthorization {
 			sessionKey = CryptographicOperations.generateSymmetricSessionKey(rxTimestamp);
 			//sessionKey = CryptographicOperations.DecryptURL(EU, nonce3, rxTimestamp);
 			
-			aeTarget = CryptographicOperations.DecryptURL(EU, nonce3, rxTimestamp);
-			
-			//System.out.println("aeTarget: "+aeTarget);
+			String appData = CryptographicOperations.DecryptURL(EU, nonce3, sessionKey);
+			String[] data = appData.split("\\|");
+			String acp = data[0];
+			aeTarget = data[1];
+			System.out.println("acp: "+acp);
+			System.out.println("aeTarget: "+aeTarget);
 
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block
