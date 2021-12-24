@@ -440,7 +440,7 @@ public class CryptographicOperations {
 		System.out.println("\n >>>>>>> Process 7.8 created Sk .....");
 		String Sk=generateSymmetricSessionKey(Ts);
 
-		byte[] URL = null;
+		byte[] URLp = null;
 		System.out.println("\n >>>>>>> Process 7.9 Decrypt D_Sk(EU) => URL .....");
 		CCMBlockCipher ccm = new CCMBlockCipher(new AESEngine());
 		ccm.init(false, new ParametersWithIV(new KeyParameter(hexStringToByteArray(Sk)), hexStringToByteArray(nonce3)));
@@ -448,9 +448,9 @@ public class CryptographicOperations {
 		int len = ccm.processBytes(hexStringToByteArray(EU), 0, hexStringToByteArray(EU).length, tmp, 0);
 		try {
 			len += ccm.doFinal(tmp, len);
-			URL = new byte[len];
-			System.arraycopy(tmp, 0, URL, 0, len);
-			System.out.println("URL: " + convertHexToString(toHex(URL)));
+			URLp = new byte[len];
+			System.arraycopy(tmp, 0, URLp, 0, len);
+			System.out.println("URLp: " + convertHexToString(toHex(URLp)));
 		} catch (IllegalStateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -458,7 +458,14 @@ public class CryptographicOperations {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return convertHexToString(toHex(URL));
+		String appData = convertHexToString(toHex(URLp));
+		String[] data = appData.split("\\|\\|");
+
+		String uri = data[0];
+		String permission = data[1]; 
+		System.out.println("URI: "+uri);
+		System.out.println("Permission: "+permission);
+		return convertHexToString(toHex(URLp));
 	}
 
 	public static String getSymmetricSessionKey() {
