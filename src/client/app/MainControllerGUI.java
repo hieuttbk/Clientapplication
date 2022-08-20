@@ -56,7 +56,7 @@ public class MainControllerGUI extends JFrame {
 	private static JLabel tempUnit;
 	private static JLabel humUnit;
 	private static JLabel loudUnit;
-	
+	public static long time;
 	private static JLabel respMsg;
 	
 	public MainControllerGUI() throws IOException {
@@ -334,7 +334,8 @@ public class MainControllerGUI extends JFrame {
     }
 	
 	public static void main(String[] args) throws IOException {
-
+		time = System.nanoTime();
+		System.out.println("*****************time start 5_1*****************"+time);
 		HttpClientAuthenticationAuthorization.ECQVregistration();
 		
 		new MainControllerGUI();

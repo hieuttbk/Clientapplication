@@ -41,7 +41,7 @@ public class HttpClientAuthenticationAuthorization {
 		CloseableHttpClient httpClient = HttpClients.createDefault();
 		URI uri = null;
 		try {
-			uri = new URIBuilder().setScheme("http").setHost("localhost").setPort(port)
+			uri = new URIBuilder().setScheme("http").setHost("127.0.0.1").setPort(port)
 					.setPath("/AuthorizationServer/ECQVClientRegistration").build();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
@@ -111,7 +111,7 @@ public class HttpClientAuthenticationAuthorization {
 		CloseableHttpClient httpClient = HttpClients.createDefault();
 		URI uri = null;
 		try {
-			uri = new URIBuilder().setScheme("http").setHost("localhost").setPort(port)
+			uri = new URIBuilder().setScheme("http").setHost("127.0.0.1").setPort(port)
 					.setPath("/AuthorizationServer/ResourceClientRegistration").build();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
@@ -125,6 +125,8 @@ public class HttpClientAuthenticationAuthorization {
 		String nonce = data[2];
 		String encodeZ = data[3];
 		String Kr = data[4];
+//		String ciphertext4 =data[5];
+		
 
 		/* Create the json body for the request */
 		JsonObject jsonBody = new JsonObject();
@@ -133,6 +135,7 @@ public class HttpClientAuthenticationAuthorization {
 		jsonBody.addProperty("subscription", subscription);
 		jsonBody.addProperty("nonce", nonce);
 		jsonBody.addProperty("encodeZ", encodeZ);
+//		jsonBody.addProperty("ciphertext4", ciphertext4);
 		Gson gson = new GsonBuilder().create();
 		String body = gson.toJson(jsonBody);
 
@@ -194,7 +197,7 @@ public class HttpClientAuthenticationAuthorization {
 		String sessionKey = null;
 		URI uri = null;
 		try {
-			uri = new URIBuilder().setScheme("http").setHost("localhost").setPort(9998)
+			uri = new URIBuilder().setScheme("http").setHost("127.0.0.1").setPort(9998)
 					.setPath("/INCSE/ticket").build();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
